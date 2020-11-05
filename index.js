@@ -1,24 +1,37 @@
 /**
- * - Validate data entry (age is required and > 0, relationship is required)
- * - Add people to a growing household list
- * - Reset the entry form after each addition
- * - Remove a previously added person from the list
- * - Display the household list in the HTML as it is modified
+ * - ✅ Validate data entry (age is required and > 0, relationship is required)
+ * - ✅ Add people to a growing household list
+ * - ✅ Reset the entry form after each addition
+ * - ✅ Remove a previously added person from the list
+ * - ✅ Display the household list in the HTML as it is modified
  * - Serialize the household as JSON upon form submission as a fake trip to the server
+ * - ✅ On submission, put the serialized JSON in the provided "debug" DOM element and display that element.
+ * - ✅ After submission, the user should be able to make changes and submit the household again.
  */
+
+// @todo: check submit button. should it be disabled before adding first item?
 
 // your code goes here ...
 const ageInput = document.querySelector('input[name="age"]');
-const relationshipDropdown = document.querySelector('select[name="rel"]');
+const relationshipDropdown = document.querySelector("select");
 const smokerCheckbox = document.querySelector('input[name="smoker"]');
 const form = document.querySelector("form");
 const addButton = document.querySelector("button.add");
 const submitButton = document.querySelector('button[type="submit"]');
 const householdList = document.querySelector("ol.household");
-addButton.disabled = true;
-submitButton.disabled = true;
+// addButton.disabled = true;
+// submitButton.disabled = true;
 
-// Validate form entries on form change.
+window.addEventListener("load", () => {
+  console.log("loaded...");
+  console.log(household);
+  addButton.disabled = true;
+  if (household.length === 0) {
+    submitButton.disabled = true;
+  }
+});
+
+// Listen for form entries and validate.
 ageInput.addEventListener("change", () => {
   validate("ageInput");
 });
@@ -99,7 +112,7 @@ function resetError(element) {
   }
 }
 
-// Enable/disable button
+// Enable/disable buttons
 form.addEventListener("change", () => {
   if (
     document.querySelectorAll("span.error").length > 0 ||
@@ -110,7 +123,12 @@ form.addEventListener("change", () => {
     submitButton.disabled = true;
   } else {
     addButton.disabled = false;
-    submitButton.disabled = false;
+    // The first time you add an item the submit button
+    // will be disabled, because the household array would
+    // be empty and you would want to add new item.
+    if (household.length > 0) {
+      submitButton.disabled = false;
+    }
   }
 });
 
@@ -119,18 +137,14 @@ let household = [];
 let id = 0;
 addButton.addEventListener("click", (e) => {
   e.preventDefault();
-
   household.push({
     id: id,
     age: ageInput.value,
     relationship: relationshipDropdown.value,
     smoker: smokerCheckbox.checked ? "yes" : "no",
   });
-
-  console.log(household);
-
+  // console.log(household);
   householdList.innerHTML += `<li data-id=${household[id].id}>Age: ${household[id].age}, relationship: ${household[id].relationship}, smoker: ${household[id].smoker} <span data-id=${household[id].id} class="delete">❌</span></li>`;
-
   id++;
   form.reset();
   addButton.disabled = true;
@@ -138,35 +152,58 @@ addButton.addEventListener("click", (e) => {
 
 householdList.addEventListener(
   "click",
-  () => {
-    document.querySelector("span.delete").addEventListener("click", () => {
-      const id = document.querySelector("span.delete").getAttribute("data-id");
+  (e) => {
+    // Remove items from the page
+    if (e.target.matches("span.delete")) {
+      // Find the id of the item.
+      id = e.target.outerHTML.match(/id=\"(\d+)\"/)[1];
+      // Remove the item from display.
       document.querySelector(`li[data-id="${id}"]`).remove();
-    });
+      // Remove the item from household array.
+      let index = household.findIndex((item) => item.id == id);
+      household.splice(index, 1);
+      // If all items have been removed make sure id value is back to 0.
+      if (household.length === 0) id = 0;
+      // Automatically submit after removing item.
+      submit();
+    }
   },
-  true
+  false
 );
 
-// Remove household items.
-// document.querySelector("span.delete").addEventListener("click", () => {
-//   const id = document.querySelector("span.delete").getAttribute("data-id");
-//   document.querySelector(`li[data-id="${id}"]`).remove();
-// });
-
 // Submit household items and display list.
-submitButton.addEventListener("click", (e) => {
-  e.preventDefault();
-
-  // household.map((item) => {
-  //   householdList.innerHTML += `<li data-id=${item.id}>Age: ${item.age}, relationship: ${item.relationship}, smoker: ${item.smoker} <span data-id=${item.id} class="delete">❌</span></li>`;
-  // });
+function submit() {
   form.reset();
   ageInput.disabled = true;
   relationshipDropdown.disabled = true;
   smokerCheckbox.disabled = true;
   submitButton.disabled = true;
+
+  const data = JSON.stringify(household);
+  const debug = document.querySelector(".debug");
+  debug.style.display = "block";
+  debug.style.whiteSpace = "pre-wrap";
+  debug.innerHTML = data;
+}
+submitButton.addEventListener("click", (e) => {
+  e.preventDefault();
+  submit();
+  // form.reset();
+  // ageInput.disabled = true;
+  // relationshipDropdown.disabled = true;
+  // smokerCheckbox.disabled = true;
+  // submitButton.disabled = true;
+
+  // const data = JSON.stringify(household);
+  // const debug = document.querySelector(".debug");
+  // debug.style.display = "block";
+  // debug.style.whiteSpace = "pre-wrap";
+  // debug.innerHTML = data;
 });
 
+/**
+ * Custom styles
+ */
 const style = document.createElement("style");
 style.innerHTML = `
 :root {
@@ -203,10 +240,9 @@ p { margin: 2rem 0; }
 a,a:visited { color: var(--link-color); }
 kbd,code,samp,pre,var { font-family: monospace; font-weight: bold; }
 code, pre {
-    background: var(--tertiary-color);
+    background: yellow;
     padding: 0.5rem 1rem;
 }
-code pre , pre code { padding: 0; }
 ul, ol { margin: 2rem 0; padding: 0 0 0 4rem; }
 input { 
     border: 1px solid var(--text-color);

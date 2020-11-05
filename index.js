@@ -4,12 +4,10 @@
  * - ✅ Reset the entry form after each addition
  * - ✅ Remove a previously added person from the list
  * - ✅ Display the household list in the HTML as it is modified
- * - Serialize the household as JSON upon form submission as a fake trip to the server
+ * - ✅ Serialize the household as JSON upon form submission as a fake trip to the server
  * - ✅ On submission, put the serialized JSON in the provided "debug" DOM element and display that element.
  * - ✅ After submission, the user should be able to make changes and submit the household again.
  */
-
-// @todo: check submit button. should it be disabled before adding first item?
 
 // your code goes here ...
 const ageInput = document.querySelector('input[name="age"]');
@@ -19,12 +17,8 @@ const form = document.querySelector("form");
 const addButton = document.querySelector("button.add");
 const submitButton = document.querySelector('button[type="submit"]');
 const householdList = document.querySelector("ol.household");
-// addButton.disabled = true;
-// submitButton.disabled = true;
 
 window.addEventListener("load", () => {
-  console.log("loaded...");
-  console.log(household);
   addButton.disabled = true;
   if (household.length === 0) {
     submitButton.disabled = true;
@@ -137,13 +131,14 @@ let household = [];
 let id = 0;
 addButton.addEventListener("click", (e) => {
   e.preventDefault();
+
   household.push({
     id: id,
     age: ageInput.value,
     relationship: relationshipDropdown.value,
     smoker: smokerCheckbox.checked ? "yes" : "no",
   });
-  // console.log(household);
+
   householdList.innerHTML += `<li data-id=${household[id].id}>Age: ${household[id].age}, relationship: ${household[id].relationship}, smoker: ${household[id].smoker} <span data-id=${household[id].id} class="delete">❌</span></li>`;
   id++;
   form.reset();
@@ -174,31 +169,27 @@ householdList.addEventListener(
 // Submit household items and display list.
 function submit() {
   form.reset();
+  // Disable form items. Refresh to start over.
+  // If user removes household items from display
+  // JSON data is updated (re-submitted).
   ageInput.disabled = true;
   relationshipDropdown.disabled = true;
   smokerCheckbox.disabled = true;
+  addButton.disabled = true;
   submitButton.disabled = true;
 
-  const data = JSON.stringify(household);
+  // Create JSON data from household array.
+  const data = JSON.stringify(household, null, 2);
+
+  // Fix .debug styles to display data and post it.
   const debug = document.querySelector(".debug");
   debug.style.display = "block";
-  debug.style.whiteSpace = "pre-wrap";
   debug.innerHTML = data;
 }
+
 submitButton.addEventListener("click", (e) => {
   e.preventDefault();
   submit();
-  // form.reset();
-  // ageInput.disabled = true;
-  // relationshipDropdown.disabled = true;
-  // smokerCheckbox.disabled = true;
-  // submitButton.disabled = true;
-
-  // const data = JSON.stringify(household);
-  // const debug = document.querySelector(".debug");
-  // debug.style.display = "block";
-  // debug.style.whiteSpace = "pre-wrap";
-  // debug.innerHTML = data;
 });
 
 /**
@@ -242,6 +233,7 @@ kbd,code,samp,pre,var { font-family: monospace; font-weight: bold; }
 code, pre {
     background: yellow;
     padding: 0.5rem 1rem;
+    font-size: var(--text-small);
 }
 ul, ol { margin: 2rem 0; padding: 0 0 0 4rem; }
 input { 
